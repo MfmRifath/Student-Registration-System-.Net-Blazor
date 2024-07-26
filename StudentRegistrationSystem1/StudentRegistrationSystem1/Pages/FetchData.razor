@@ -1,0 +1,93 @@
+﻿@page "/fetchdata"
+
+@using StudentRegistrationSystem1.Data
+@using StudentRegistrationSystem1.Services
+@inject IstudentService ForecastService
+@inject NavigationManager NavManager
+@inject NavigationManager Navigation
+<h1>Student Details</h1>
+
+
+@if (students == null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <div>
+        <p>Total Students: @students.Count</p>
+        <p>Total Male Students: @students.Count(s => s.Gender == "Male")</p>
+        <p>Total Female Students: @students.Count(s => s.Gender == "Female")</p>
+    </div>
+    <div class="table-responsive">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>First Name</th>
+                    <th>Last Name</th>
+                    <th>Gender</th>
+                    <th>Email</th>
+                    <th>Course</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var student in students)
+                {
+                    <tr>
+                        <td>@student.FirstName</td>
+                        <td>@student.LastName</td>
+                        <td>@student.Gender</td>
+                        <td>@student.Email</td>
+                        <td>@student.Course</td>
+                        <td>
+                            <button type="submit" @onclick="@(() => EditStudent(student.StudentID))" class="btn btn-primary">Edit</button>
+
+                        </td>
+                        <td>
+                            <button type="submit" @onclick="@(() => DeleteStudent(student))" class="btn btn-primary">Delete</button>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+
+}
+<div>
+    <button @onclick="GoBack" class="mt-2 btn btn-primary">Go Back</button>
+</div>
+ <div>
+
+    <!-- Bar Chart for Course Details -->
+    <BarChart Width="800" Height="400" Data="chartData" Options="chartOptions" />
+</div>
+
+@code {
+    private List<Models.StudentModel> students;
+    
+
+    protected override async Task OnInitializedAsync()
+    {
+        StudentService student = new StudentService();
+        students = await student.GetAllStudent();
+        
+    }
+    private async void EditStudent(int studentID)
+    {
+        NavManager.NavigateTo($"update_student/{studentID}" );
+    }
+    private async void DeleteStudent(Models.StudentModel student)
+    {StudentService student1 = new StudentService();
+        var response = await student1.DeleteStudent(student);
+        if (response > 0)
+        {
+            await  OnInitializedAsync();
+            this.StateHasChanged();
+        }
+    }
+    private void GoBack()
+    {
+        // Navigate back to the previous page using a special "back" URL
+        Navigation.NavigateTo("/Home");
+    }
+}

@@ -1,0 +1,21 @@
+﻿@page "/Home"
+<div class="menu-container">
+    <h3>Home</h3>
+
+    <ul class="nav-menu">
+        <li><NavLink href="/add_student">Add Student</NavLink></li>
+        <li><NavLink href="/fetchdata">Student Detail</NavLink></li>
+        <li><button @onclick="Logout" class="sample-button danger-button">Logout</button></li>
+    </ul>
+</div>
+
+@code {
+    @inject NavigationManager Navigation
+
+    private void Logout()
+    {
+        // Handle the logout logic here
+        // Redirect to the login page or perform any necessary actions
+        Navigation.NavigateTo("/");
+    }
+}

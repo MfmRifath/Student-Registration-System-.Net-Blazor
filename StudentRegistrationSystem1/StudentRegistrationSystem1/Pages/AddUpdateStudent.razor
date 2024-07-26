@@ -1,0 +1,168 @@
+﻿@page "/add_student"
+@page "/update_student/{StudentID:int}"
+
+
+@using StudentRegistrationSystem1.Models
+@using StudentRegistrationSystem1.Services
+@inject IstudentService StudentService
+@inject NavigationManager Navigation
+<h3 class="page-title">Add or Update Student</h3>
+
+<div class="form-container">
+    <EditForm Model="@studentModel" OnValidSubmit="SaveStudentRecordAsync">
+    <DataAnnotationsValidator />
+<div class="form-group">
+    <label>First Name</label>
+    <input @bind="firstName" class="form-control" placeholder="First Name">
+        <ValidationMessage For="@(() => firstName)" />
+</div>
+        <div class="form-group">
+            <label>Last Name</label>
+            <input @bind="lastName" class="form-control" placeholder="Last Name">
+            <ValidationMessage For="@(() => lastName)" />
+        </div>
+
+        <div class="mt-2 form-group">
+            <label>Email</label>
+            <input @bind="email" class="form-control" placeholder="E-mail">
+            <ValidationMessage For="@(() => email)" />
+        </div>
+
+
+
+        <div class="mt-2 form-group">
+            <label>Course</label>
+            <select @bind="course" class="form-control">
+                <option value="">Select Course</option>
+                <option value="PhysicalScience">Physical Science</option>
+                <option value="Engineering">Engineering</option>
+                <option value="AppliedScience">Applied Science</option>
+            </select>
+            <ValidationMessage For="@(() => course)" />
+        </div>
+
+<div class="mt-2 form-group">
+    <label>Gender</label>
+    <div class="radio-group">
+        <div class="radio-option">
+            <div class="form-check">
+                <input checked="@(gender=="Male")" @onchange="@(()=> setGender("Male"))" class="form-check-input" type="radio" name="flexRadioDefault">
+                <label class="form-check-label" for="flexRadioDefault1">
+                    Male
+                </label>
+            </div>
+                <div class="radio-option">
+                <input checked="@(gender=="Female")" @onchange="@(()=> setGender("Female"))" class="form-check-input" type="radio" name="flexRadioDefault">
+                <label class="form-check-label" for="flexRadioDefault2">
+                    Female
+                </label>
+            </div>
+                <ValidationMessage For="@(() => gender)" />
+        </div>
+    </div>
+</div>
+    </EditForm>
+
+    <button type="submit" @onclick="SaveStudentRecordAsync" class="mt-2 btn btn-primary">Submit</button>
+
+<div>
+    <button @onclick="GoBack" class="mt-2 btn btn-primary">Go Back</button>
+</div>
+    
+</div>
+
+
+
+@code {
+
+    [Parameter]
+    public int StudentID { get; set; }
+
+    private StudentModel studentModel = new StudentModel();
+
+
+    private string firstName;
+    private string lastName;
+    private string email;
+    private string gender;
+    private string course;
+
+
+    private void setGender(string gender)
+    {
+        this.gender = gender;
+    }
+
+    protected async override Task OnInitializedAsync()
+    {
+        if (StudentID > 0)
+        {
+            var response = await StudentService.GetStudentByID(StudentID);
+            if (response != null)
+            {
+                firstName = response.FirstName;
+                lastName = response.LastName;
+                email = response.Email;
+                gender = response.Gender;
+            }
+        }
+    }
+
+    private async Task SaveStudentRecordAsync()
+    {
+        var isValid = ValidateForm();
+        if (!isValid)
+            return;
+
+        var studentModel = new Models.StudentModel
+            {
+                FirstName = firstName,
+                LastName = lastName,
+                Email = email,
+                Gender = gender,
+                StudentID = StudentID,
+                Course = course
+            };
+
+        int response = -1;
+        if (StudentID > 0)
+        {
+            response = await StudentService.UpdateStudent(studentModel);
+            // update record
+        }
+        else
+        {
+            response = await StudentService.AddStudent(studentModel);
+            // add record
+        }
+
+        if (response > 0)
+        {
+            firstName = lastName = gender = email =course = string.Empty;
+            await InvokeAsync(StateHasChanged);
+            await App.Current.MainPage.DisplayAlert("Record Saved", "Record Saved To Student Table", "OK");
+        }
+        else
+        {
+            await App.Current.MainPage.DisplayAlert("Oops", "Something went wrong while adding record", "OK");
+        }
+    }
+
+    private bool ValidateForm()
+    {
+        if (string.IsNullOrWhiteSpace(firstName) || string.IsNullOrWhiteSpace(lastName) || string.IsNullOrWhiteSpace(email) || string.IsNullOrWhiteSpace(gender) || (string.IsNullOrWhiteSpace(course) && string.IsNullOrEmpty(course)))
+        {
+            App.Current.MainPage.DisplayAlert("Validation Error", "Please fill in all required fields.", "OK");
+            return false;
+        }
+
+        return true;
+    }
+
+    private void GoBack()
+    {
+        // Navigate back to the previous page using a special "back" URL
+        Navigation.NavigateTo("/Home");
+    }
+    
+}

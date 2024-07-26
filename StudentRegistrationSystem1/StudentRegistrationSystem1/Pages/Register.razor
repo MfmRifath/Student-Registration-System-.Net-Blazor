@@ -1,0 +1,97 @@
+﻿@page "/register"
+@using StudentRegistrationSystem1.Models;
+@using StudentRegistrationSystem1.Services;
+@using System.ComponentModel.DataAnnotations;
+<div class="registration-container">
+<h3>Create Account</h3>
+    <div class="logo">
+        <img src="/Images/creat_account.png" alt="Logo" />
+    </div>
+<form class="registration-form">
+<EditForm Model="@registerModel" OnValidSubmit="OnRegister">
+    <DataAnnotationsValidator />
+    <div class="form-group">
+         <label class="form-label" for="Username">Username:</label>
+                <InputText id="Username" @bind-Value="registerModel.Username" class="form-control" />
+        <ValidationMessage For="@(() => registerModel.Username)" />
+    </div>
+
+    <divclass class="form-group">
+        <label class="form-label"  for="Password">Password:</label>
+        <InputText id="Password" @bind-Value="registerModel.Password" class="form-control" type="password" />
+        <ValidationMessage For="@(() => registerModel.Password)" />
+    </divclass>
+
+    <divclass class="form-group">
+        <label class="form-label" for="ConfirmPassword">Confirm Password:</label>
+        <InputText id="ConfirmPassword" @bind-Value="registerModel.ConfirmPassword" class="form-control" type="password" />
+        <ValidationMessage For="@(() => registerModel.ConfirmPassword)" />
+    </divclass>
+
+    <div>
+        <button type="submit" class="mt-2 btn btn-primary">Register</button>
+    </div>
+ </EditForm>
+
+  <div>
+    <p>Already have an account? <a href="/">Login</a>.</p>
+  </div>
+ </form>
+    
+
+</div>
+
+@code {
+    private RegisterModel registerModel = new RegisterModel();
+    private DatabaseHelper databaseHelper;
+    @inject NavigationManager Navigation
+
+    private class RegisterModel
+    {
+        [Required(ErrorMessage = "Username is required.")]
+        public string Username { get; set; }
+
+        [Required(ErrorMessage = "Password is required.")]
+        public string Password { get; set; }
+
+        [Compare(nameof(Password), ErrorMessage = "Passwords do not match.")]
+        public string ConfirmPassword { get; set; }
+    }
+
+    private void OnRegister()
+    {
+        try
+        {
+            // Assuming the database path is set appropriately
+            databaseHelper = new DatabaseHelper();
+
+            // Check if the username is already taken
+            if (databaseHelper.ValidateUser(registerModel.Username, ""))
+            {
+                // Username already exists
+                Console.WriteLine("Username already taken. Please choose a different one.");
+                return;
+            }
+
+            // Register the user
+            var newUser = new User { Username = registerModel.Username, Password = registerModel.Password };
+            databaseHelper.Insert(newUser);
+
+            // Successful registration
+            Console.WriteLine("Registration successful");
+
+            // Navigate to the login page after successful registration
+            Navigation.NavigateTo("/");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error during registration: {ex.Message}");
+        }
+        finally
+        {
+            // Dispose of the database helper to release resources
+            databaseHelper?.Dispose();
+        }
+    }
+   
+}
